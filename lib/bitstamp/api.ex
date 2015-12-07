@@ -71,7 +71,7 @@ defmodule Bitstamp.Api do
   defp create_order(action, opts) do
     amount = Keyword.fetch!(opts, :amount)
     price = Keyword.fetch!(opts, :price)
-    case Keyword.fetch(opts, :price) do
+    case Keyword.fetch(opts, :limit_price) do
       {:ok, limit_price} ->
         post_to_api action, %{amount: amount, price: price, limit_price: limit_price}
       _ ->
