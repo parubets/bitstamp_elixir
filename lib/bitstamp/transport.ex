@@ -32,8 +32,6 @@ defmodule Bitstamp.Api.Transport do
       {:ok, "text/html"} ->
         {:reply, {:error, res.body}, state}
     end
-    json = parse_json(res)
-    {:reply, json, state}
   end
 
   defp get_api_params do
