@@ -25,6 +25,13 @@ defmodule Bitstamp.Api.Transport do
     body = Dict.merge(%{key: Application.get_env(:bitstamp_elixir, :key), signature: signature, nonce: nonce}, params)
       |> URI.encode_query
     res = HTTPotion.post(url, [body: body, headers: ["Content-Type": "application/x-www-form-urlencoded"]])
+    case Dict.fetch(res.headers, :"Content-Type") do
+      {:ok, "application/json"} ->
+        json = parse_json(res)
+        {:reply, {:ok, json}, state}
+      {:ok, "text/html"} ->
+        {:reply, {:error, res.body}, state}
+    end
     json = parse_json(res)
     {:reply, json, state}
   end
