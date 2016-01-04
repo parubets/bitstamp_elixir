@@ -24,7 +24,7 @@ defmodule Bitstamp.Api.Transport do
     url = @base_url <> method <> "/"
     body = Dict.merge(%{key: Application.get_env(:bitstamp_elixir, :key), signature: signature, nonce: nonce}, params)
       |> URI.encode_query
-    try
+    try do
       res = HTTPotion.post(url, [body: body, headers: ["Content-Type": "application/x-www-form-urlencoded"]])
       reply = parse_res(res)
       {:reply, reply, state}
