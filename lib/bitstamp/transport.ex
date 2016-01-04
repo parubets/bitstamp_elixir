@@ -34,7 +34,7 @@ defmodule Bitstamp.Api.Transport do
   end
 
   defp parse_res(res) do
-    case Map.fetch(res.headers, :"Content-Type") do
+    case Keyword.fetch(res.headers, :"Content-Type") do
       {:ok, "application/json"} ->
         json = parse_json(res)
         {:ok, json}
