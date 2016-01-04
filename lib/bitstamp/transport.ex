@@ -24,13 +24,22 @@ defmodule Bitstamp.Api.Transport do
     url = @base_url <> method <> "/"
     body = Dict.merge(%{key: Application.get_env(:bitstamp_elixir, :key), signature: signature, nonce: nonce}, params)
       |> URI.encode_query
-    res = HTTPotion.post(url, [body: body, headers: ["Content-Type": "application/x-www-form-urlencoded"]])
-    case Dict.fetch(res.headers, :"Content-Type") do
+    try
+      res = HTTPotion.post(url, [body: body, headers: ["Content-Type": "application/x-www-form-urlencoded"]])
+      reply = parse_res(res)
+      {:reply, reply, state}
+    rescue
+      e in HTTPotion.HTTPError -> {:reply, {:error, e}, state}
+    end
+  end
+
+  defp parse_res(res) do
+    case Map.fetch(res.headers, :"Content-Type") do
       {:ok, "application/json"} ->
         json = parse_json(res)
-        {:reply, {:ok, json}, state}
+        {:ok, json}
       {:ok, "text/html"} ->
-        {:reply, {:error, res.body}, state}
+        {:error, res.body}
     end
   end
 
