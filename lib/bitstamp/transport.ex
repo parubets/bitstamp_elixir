@@ -10,7 +10,7 @@ defmodule Bitstamp.Api.Transport do
   end
 
   def post(method, params) do
-    GenServer.call(__MODULE__, {:post, method, params})
+    GenServer.call(__MODULE__, {:post, method, params}, :infinity)
   end
 
   ## Server Callbacks
@@ -39,6 +39,8 @@ defmodule Bitstamp.Api.Transport do
         json = parse_json(res)
         {:ok, json}
       {:ok, "text/html"} ->
+        {:error, res.body}
+      :error ->
         {:error, res.body}
     end
   end
