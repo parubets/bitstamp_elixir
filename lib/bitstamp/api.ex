@@ -1,5 +1,9 @@
 defmodule Bitstamp.Api do
 
+  def orderbook do
+    get_from_api "order_book"
+  end
+
   def balance do
     post_to_api "balance"
   end
@@ -77,6 +81,10 @@ defmodule Bitstamp.Api do
       _ ->
         post_to_api action, %{amount: amount, price: price}
     end
+  end
+
+  defp get_from_api(path) do
+    Bitstamp.Api.Transport.get(path)
   end
 
   defp post_to_api(method, params \\ %{}) do

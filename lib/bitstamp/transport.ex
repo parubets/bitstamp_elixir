@@ -9,6 +9,10 @@ defmodule Bitstamp.Api.Transport do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
+  def get(path) do
+    GenServer.call(__MODULE__, {:get, path}, :infinity)
+  end
+
   def post(method, params) do
     GenServer.call(__MODULE__, {:post, method, params}, :infinity)
   end
@@ -26,6 +30,17 @@ defmodule Bitstamp.Api.Transport do
       |> URI.encode_query
     try do
       res = HTTPotion.post(url, [body: body, headers: ["Content-Type": "application/x-www-form-urlencoded"]])
+      reply = parse_res(res)
+      {:reply, reply, state}
+    rescue
+      e in HTTPotion.HTTPError -> {:reply, {:error, e}, state}
+    end
+  end
+
+  def handle_call({:get, path}, _from, state) do
+    url = @base_url <> path <> "/"
+    try do
+      res = HTTPotion.get(url)
       reply = parse_res(res)
       {:reply, reply, state}
     rescue
