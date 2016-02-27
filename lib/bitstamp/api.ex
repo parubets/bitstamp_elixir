@@ -1,5 +1,9 @@
 defmodule Bitstamp.Api do
 
+  def ticker do
+    get_from_api "ticker"
+  end
+
   def orderbook do
     get_from_api "order_book"
   end

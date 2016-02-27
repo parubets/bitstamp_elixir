@@ -55,7 +55,7 @@ defmodule Bitstamp.Api.Transport do
         {:ok, json}
       {:ok, "text/html"} ->
         {:error, res.body}
-      :error ->
+      _ ->
         {:error, res.body}
     end
   end
