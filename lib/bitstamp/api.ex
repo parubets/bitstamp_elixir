@@ -1,5 +1,9 @@
 defmodule Bitstamp.Api do
 
+  def eur_usd do
+    get_from_api "eur_usd"
+  end
+
   def ticker do
     get_from_api "ticker"
   end
