@@ -1,3 +1,7 @@
+defmodule Bitstamp.Api.Error do
+  defexception message: "Bitstamp API exception"
+end
+
 defmodule Bitstamp.Api.Transport do
   use GenServer
 
@@ -54,7 +58,7 @@ defmodule Bitstamp.Api.Transport do
         json = parse_json(res)
         {:ok, json}
       _ ->
-        {:error, res.body}
+        {:error, %Bitstamp.Api.Error{message: res.body}}
     end
   end
 
