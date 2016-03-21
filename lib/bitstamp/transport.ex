@@ -32,33 +32,38 @@ defmodule Bitstamp.Api.Transport do
     url = @base_url <> method <> "/"
     body = Dict.merge(%{key: Application.get_env(:bitstamp_elixir, :key), signature: signature, nonce: nonce}, params)
       |> URI.encode_query
-    try do
-      res = HTTPotion.post(url, [body: body, headers: ["Content-Type": "application/x-www-form-urlencoded"]])
-      reply = parse_res(res)
-      {:reply, reply, state}
-    rescue
-      e in HTTPotion.HTTPError -> {:reply, {:error, e}, state}
+    post_headers = %{"Content-Type": "application/x-www-form-urlencoded"}
+    case HTTPoison.post(url, body, post_headers) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body, headers: headers}} ->
+        reply = parse_res(body, headers)
+        {:reply, reply, state}
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        raise "Not found :("
+      {:error, e} ->
+        {:reply, {:error, e}, state}
     end
   end
 
   def handle_call({:get, path}, _from, state) do
     url = @base_url <> path <> "/"
-    try do
-      res = HTTPotion.get(url)
-      reply = parse_res(res)
-      {:reply, reply, state}
-    rescue
-      e in HTTPotion.HTTPError -> {:reply, {:error, e}, state}
+    case HTTPoison.get(url) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body, headers: headers}} ->
+        reply = parse_res(body, headers)
+        {:reply, reply, state}
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        raise "Not found :("
+      {:error, e} ->
+        {:reply, {:error, e}, state}
     end
   end
 
-  defp parse_res(res) do
-    case res.headers["content-type"] do
+  defp parse_res(body, headers) do
+    case get_header(headers, "Content-Type") do
       "application/json" ->
-        json = parse_json(res)
+        json = parse_json(body)
         {:ok, json}
       _ ->
-        {:error, %Bitstamp.Api.Error{message: res.body}}
+        {:error, %Bitstamp.Api.Error{message: body}}
     end
   end
 
@@ -69,8 +74,15 @@ defmodule Bitstamp.Api.Transport do
     {nonce, signature}
   end
 
-  defp parse_json(response) do
-    Poison.decode!(response.body)
+  defp parse_json(body) do
+    Poison.decode!(body)
+  end
+
+  defp get_header(headers, key) do
+    headers
+    |> Enum.filter(fn({k, _}) -> k == key end)
+    |> hd
+    |> elem(1)
   end
 
 end
