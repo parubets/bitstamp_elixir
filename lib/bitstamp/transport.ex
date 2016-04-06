@@ -6,6 +6,9 @@ defmodule Bitstamp.Api.Transport do
   use GenServer
 
   @base_url "https://www.bitstamp.net/api/"
+  @bitstamp_client_id Application.get_env(:bitstamp_elixir, :client_id)
+  @bitstamp_key Application.get_env(:bitstamp_elixir, :key)
+  @bitstamp_secret Application.get_env(:bitstamp_elixir, :secret)
 
   ## Public API
 
@@ -69,8 +72,8 @@ defmodule Bitstamp.Api.Transport do
 
   defp get_api_params do
     nonce = Integer.to_string(:os.system_time(:milli_seconds)) <> "0"
-    message = nonce <> Application.get_env(:bitstamp_elixir, :client_id) <> Application.get_env(:bitstamp_elixir, :key)
-    signature = :crypto.hmac(:sha256, Application.get_env(:bitstamp_elixir, :secret), message) |> Base.encode16
+    message = nonce <> get_bitstamp_client_id <> get_bitstamp_key
+    signature = :crypto.hmac(:sha256, get_bitstamp_secret, message) |> Base.encode16
     {nonce, signature}
   end
 
@@ -83,6 +86,18 @@ defmodule Bitstamp.Api.Transport do
     |> Enum.filter(fn({k, _}) -> k == key end)
     |> hd
     |> elem(1)
+  end
+
+  defp get_bitstamp_client_id do
+    Application.get_env(:bitstamp_elixir, :client_id) || System.get_env("BITSTAMP_CLIENT_ID") || @bitstamp_client_id
+  end
+
+  defp get_bitstamp_key do
+    Application.get_env(:bitstamp_elixir, :key) || System.get_env("BITSTAMP_KEY") || @bitstamp_key
+  end
+
+  defp get_bitstamp_secret do
+    Application.get_env(:bitstamp_elixir, :secret) || System.get_env("BITSTAMP_SECRET") || @bitstamp_secret
   end
 
 end
