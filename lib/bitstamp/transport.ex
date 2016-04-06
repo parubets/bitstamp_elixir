@@ -33,7 +33,7 @@ defmodule Bitstamp.Api.Transport do
   def handle_call({:post, method, params}, _from, state) do
     {nonce, signature} = get_api_params
     url = @base_url <> method <> "/"
-    body = Dict.merge(%{key: Application.get_env(:bitstamp_elixir, :key), signature: signature, nonce: nonce}, params)
+    body = Dict.merge(%{key: get_bitstamp_key, signature: signature, nonce: nonce}, params)
       |> URI.encode_query
     post_headers = %{"Content-Type": "application/x-www-form-urlencoded"}
     case HTTPoison.post(url, body, post_headers) do
