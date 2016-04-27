@@ -16,6 +16,7 @@ defmodule BitstampElixirTest do
     {:ok, balance} = Bitstamp.Api.balance
     assert is_map(balance) == true
     assert Map.has_key?(balance, "usd_balance")
+    assert Map.has_key?(balance, "eur_balance")
     assert Map.has_key?(balance, "btc_balance")
     assert Map.has_key?(balance, "fee")
   end
