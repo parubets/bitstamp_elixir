@@ -64,7 +64,12 @@ defmodule Bitstamp.Api.Transport do
     case get_header(headers, "Content-Type") do
       "application/json" ->
         json = parse_json(body)
-        {:ok, json}
+        case json do
+          %{"status" => "error", "reason" => reason} ->
+            {:error, %Bitstamp.Api.Error{message: reason}}
+          _ ->
+            {:ok, json}
+        end
       _ ->
         {:error, %Bitstamp.Api.Error{message: body}}
     end
