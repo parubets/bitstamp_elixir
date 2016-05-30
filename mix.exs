@@ -3,7 +3,7 @@ defmodule BitstampElixir.Mixfile do
 
   def project do
     [app: :bitstamp_elixir,
-     version: "0.0.9",
+     version: "0.1.0",
      elixir: "~> 1.1",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
