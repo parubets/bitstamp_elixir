@@ -18,7 +18,7 @@ defmodule BitstampElixirTest do
     assert Map.has_key?(balance, "usd_balance")
     assert Map.has_key?(balance, "eur_balance")
     assert Map.has_key?(balance, "btc_balance")
-    assert Map.has_key?(balance, "fee")
+    assert Map.has_key?(balance, "btceur_fee")
   end
 
 end

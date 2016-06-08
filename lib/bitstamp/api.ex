@@ -29,7 +29,7 @@ defmodule Bitstamp.Api do
   end
 
   def balance do
-    post_to_api "balance"
+    post_to_api "v2/balance"
   end
 
   def user_transactions do
