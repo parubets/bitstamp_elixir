@@ -17,11 +17,11 @@ defmodule Bitstamp.Api.Transport do
   end
 
   def get(path) do
-    GenServer.call(__MODULE__, {:get, path}, :infinity)
+    GenServer.call(Bitstamp.Api.GetTransport, {:get, path}, :infinity)
   end
 
   def post(method, params) do
-    GenServer.call(__MODULE__, {:post, method, params}, :infinity)
+    GenServer.call(Bitstamp.Api.PostTransport, {:post, method, params}, :infinity)
   end
 
   ## Server Callbacks
@@ -31,12 +31,13 @@ defmodule Bitstamp.Api.Transport do
   end
 
   def handle_call({:post, method, params}, _from, state) do
-    {nonce, signature} = get_api_params
+    {nonce, signature} = get_api_params()
     url = @base_url <> method <> "/"
-    body = Dict.merge(%{key: get_bitstamp_key, signature: signature, nonce: nonce}, params)
+    body = Map.merge(%{key: get_bitstamp_key(), signature: signature, nonce: nonce}, params)
       |> URI.encode_query
     post_headers = %{"Content-Type": "application/x-www-form-urlencoded"}
-    case HTTPoison.post(url, body, post_headers) do
+    opts = [recv_timeout: post_recv_timeout()]
+    case HTTPoison.post(url, body, post_headers, opts) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body, headers: headers}} ->
         reply = parse_res(body, headers)
         {:reply, reply, state}
@@ -47,17 +48,27 @@ defmodule Bitstamp.Api.Transport do
     end
   end
 
-  def handle_call({:get, path}, _from, state) do
+  def handle_call({:get, path}, from, state) do
     url = @base_url <> path <> "/"
-    case HTTPoison.get(url) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body, headers: headers}} ->
-        reply = parse_res(body, headers)
-        {:reply, reply, state}
-      {:ok, %HTTPoison.Response{status_code: status_code, body: body, headers: headers}} ->
-        {:reply, {:error, %Bitstamp.Api.Error{message: "Bitstamp GET API exception", body: body, status_code: status_code, headers: headers}}, state}
-      {:error, e} ->
-        {:reply, {:error, e}, state}
+    opts = [recv_timeout: get_recv_timeout()]
+    me = self()
+    Task.start fn ->
+      reply = case HTTPoison.get(url, opts) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: body, headers: headers}} ->
+          parse_res(body, headers)
+        {:ok, %HTTPoison.Response{status_code: status_code, body: body, headers: headers}} ->
+          {:error, %Bitstamp.Api.Error{message: "Bitstamp GET API exception", body: body, status_code: status_code, headers: headers}}
+        {:error, e} ->
+          {:error, e}
+      end
+      send me, {:got_get, reply, from}
     end
+    {:noreply, state}
+  end
+
+  def handle_info({:got_get, reply, from}, state) do
+    GenServer.reply(from, reply)
+    {:noreply, state}
   end
 
   defp parse_res(body, headers) do
@@ -77,8 +88,8 @@ defmodule Bitstamp.Api.Transport do
 
   defp get_api_params do
     nonce = Integer.to_string(:os.system_time(:milli_seconds)) <> "0"
-    message = nonce <> get_bitstamp_client_id <> get_bitstamp_key
-    signature = :crypto.hmac(:sha256, get_bitstamp_secret, message) |> Base.encode16
+    message = nonce <> get_bitstamp_client_id() <> get_bitstamp_key()
+    signature = :crypto.hmac(:sha256, get_bitstamp_secret(), message) |> Base.encode16
     {nonce, signature}
   end
 
@@ -103,6 +114,14 @@ defmodule Bitstamp.Api.Transport do
 
   defp get_bitstamp_secret do
     Application.get_env(:bitstamp_elixir, :secret) || System.get_env("BITSTAMP_SECRET") || @bitstamp_secret
+  end
+
+  defp get_recv_timeout do
+    Application.get_env(:bitstamp_elixir, :get_recv_timeout) || 5_000
+  end
+
+  defp post_recv_timeout do
+    Application.get_env(:bitstamp_elixir, :post_recv_timeout) || 5_000
   end
 
 end
