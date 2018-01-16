@@ -16,6 +16,46 @@ defmodule Bitstamp.Api do
     get_from_api "v2/ticker/btceur"
   end
 
+  def ticker_btc_usd do
+    get_from_api "v2/ticker/btcusd"
+  end
+
+  def ticker_btc_eur do
+    get_from_api "v2/ticker/btceur"
+  end
+
+  def ticker_eth_usd do
+    get_from_api "v2/ticker/ethusd"
+  end
+
+  def ticker_eth_eur do
+    get_from_api "v2/ticker/etheur"
+  end
+
+  def ticker_xrp_usd do
+    get_from_api "v2/ticker/xrpusd"
+  end
+
+  def ticker_xrp_eur do
+    get_from_api "v2/ticker/xrpeur"
+  end
+
+  def ticker_ltc_usd do
+    get_from_api "v2/ticker/ltcusd"
+  end
+
+  def ticker_ltc_eur do
+    get_from_api "v2/ticker/ltceur"
+  end
+
+  def ticker_bch_usd do
+    get_from_api "v2/ticker/bchusd"
+  end
+
+  def ticker_bch_eur do
+    get_from_api "v2/ticker/bcheur"
+  end
+
   def orderbook do
     get_from_api "order_book"
   end
