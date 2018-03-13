@@ -95,6 +95,10 @@ defmodule Bitstamp.Api do
     post_to_api "v2/open_orders/btceur"
   end
 
+  def open_orders(base, quote_c) do
+    post_to_api "v2/open_orders/#{base}#{quote_c}"
+  end
+
   def order_status(order_id) do
     post_to_api "order_status", %{id: order_id}
   end
@@ -111,12 +115,16 @@ defmodule Bitstamp.Api do
     create_order("buy", opts)
   end
 
-  def buy_usd(opts) do
-    create_order("v2/buy/btcusd", opts)
+  def buy(base, quote_c, opts) when is_binary(base) and is_binary(quote_c) do
+    create_order("v2/buy/#{String.downcase(base)}#{String.downcase(quote_c)}", opts)
   end
 
-  def buy_eur(opts) do
-    create_order("v2/buy/btceur", opts)
+  def buy_usd(coin, opts) when is_binary(coin) do
+    create_order("v2/buy/#{String.downcase(coin)}usd", opts)
+  end
+
+  def buy_eur(coin, opts) when is_binary(coin) do
+    create_order("v2/buy/#{String.downcase(coin)}eur", opts)
   end
 
   def sell(opts) do
