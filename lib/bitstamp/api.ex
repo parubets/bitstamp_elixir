@@ -60,6 +60,10 @@ defmodule Bitstamp.Api do
     get_from_api "order_book"
   end
 
+  def orderbook(base, quote_c) do
+    get_from_api "v2/order_book/#{String.downcase(base)}#{String.downcase(quote_c)}"
+  end
+
   def orderbook_usd do
     get_from_api "v2/order_book/btcusd"
   end
@@ -96,7 +100,7 @@ defmodule Bitstamp.Api do
   end
 
   def open_orders(base, quote_c) do
-    post_to_api "v2/open_orders/#{base}#{quote_c}"
+    post_to_api "v2/open_orders/#{String.downcase(base)}#{String.downcase(quote_c)}"
   end
 
   def order_status(order_id) do
