@@ -61,7 +61,7 @@ defmodule Bitstamp.Api do
   end
 
   def orderbook(base, quote_c) do
-    get_from_api "v2/order_book/#{String.downcase(base)}#{String.downcase(quote_c)}"
+    get_from_api "v2/order_book/#{fix_coin(base)}#{fix_coin(quote_c)}"
   end
 
   def orderbook_usd do
@@ -100,7 +100,7 @@ defmodule Bitstamp.Api do
   end
 
   def open_orders(base, quote_c) do
-    post_to_api "v2/open_orders/#{String.downcase(base)}#{String.downcase(quote_c)}"
+    post_to_api "v2/open_orders/#{fix_coin(base)}#{fix_coin(quote_c)}"
   end
 
   def order_status(order_id) do
@@ -119,16 +119,16 @@ defmodule Bitstamp.Api do
     create_order("buy", opts)
   end
 
-  def buy(base, quote_c, opts) when is_binary(base) and is_binary(quote_c) do
-    create_order("v2/buy/#{String.downcase(base)}#{String.downcase(quote_c)}", opts)
+  def buy(base, quote_c, opts) do
+    create_order("v2/buy/#{fix_coin(base)}#{fix_coin(quote_c)}", opts)
   end
 
-  def buy_usd(coin, opts) when is_binary(coin) do
-    create_order("v2/buy/#{String.downcase(coin)}usd", opts)
+  def buy_usd(base, opts) do
+    create_order("v2/buy/#{fix_coin(base)}usd", opts)
   end
 
-  def buy_eur(coin, opts) when is_binary(coin) do
-    create_order("v2/buy/#{String.downcase(coin)}eur", opts)
+  def buy_eur(base, opts) do
+    create_order("v2/buy/#{fix_coin(base)}eur", opts)
   end
 
   def sell(opts) do
@@ -189,6 +189,10 @@ defmodule Bitstamp.Api do
 
   defp post_to_api(method, params \\ %{}) do
     Bitstamp.Api.Transport.post(method, params)
+  end
+
+  defp fix_coin(coin) do
+    "#{coin}" |> String.downcase
   end
 
 end
