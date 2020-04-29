@@ -1,8 +1,8 @@
-use Mix.Config
+import Config
 
-config :bitstamp_elixir, key: ""
-config :bitstamp_elixir, secret: ""
-config :bitstamp_elixir, client_id: ""
-
-config :bitstamp_elixir, get_recv_timeout: 5000
-config :bitstamp_elixir, post_recv_timeout: 5000
+config :bitstamp_elixir, Bitstamp.Api.Transport,
+  key: "",
+  secret: "",
+  client_id: "",
+  get_recv_timeout: 5000,
+  post_recv_timeout: 5000

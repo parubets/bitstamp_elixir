@@ -6,9 +6,12 @@ defmodule Bitstamp.Api.Transport do
   use GenServer
 
   @base_url "https://www.bitstamp.net/api/"
-  @bitstamp_client_id Application.get_env(:bitstamp_elixir, :client_id)
-  @bitstamp_key Application.get_env(:bitstamp_elixir, :key)
-  @bitstamp_secret Application.get_env(:bitstamp_elixir, :secret)
+  @bitstamp_client_id Application.get_env(:bitstamp_elixir, __MODULE__, []) |> Keyword.get(:client_id)
+  @bitstamp_key Application.get_env(:bitstamp_elixir, __MODULE__, []) |> Keyword.get(:key)
+  @bitstamp_secret Application.get_env(:bitstamp_elixir, __MODULE__, []) |> Keyword.get(:secret)
+
+  @default_get_recv_timeout 5_000
+  @default_post_recv_timeout 5_000
 
   ## Public API
 
@@ -36,7 +39,7 @@ defmodule Bitstamp.Api.Transport do
     body = Map.merge(%{key: get_bitstamp_key(), signature: signature, nonce: nonce}, params)
       |> URI.encode_query
     post_headers = %{"Content-Type": "application/x-www-form-urlencoded"}
-    opts = [recv_timeout: post_recv_timeout()]
+    opts = [recv_timeout: (config(:post_recv_timeout) || @default_post_recv_timeout)]
     case HTTPoison.post(url, body, post_headers, opts) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body, headers: headers}} ->
         reply = parse_res(body, headers)
@@ -50,7 +53,7 @@ defmodule Bitstamp.Api.Transport do
 
   def handle_call({:get, path}, from, state) do
     url = @base_url <> path <> "/"
-    opts = [recv_timeout: get_recv_timeout()]
+    opts = [recv_timeout: (config(:get_recv_timeout) || @default_get_recv_timeout)]
     me = self()
     Task.start fn ->
       reply = case HTTPoison.get(url, opts) do
@@ -105,23 +108,30 @@ defmodule Bitstamp.Api.Transport do
   end
 
   defp get_bitstamp_client_id do
-    Application.get_env(:bitstamp_elixir, :client_id) || System.get_env("BITSTAMP_CLIENT_ID") || @bitstamp_client_id
+    vault_get_kv("bitstamp", "client_id") || config(:client_id) || System.get_env("BITSTAMP_CLIENT_ID") || @bitstamp_client_id
   end
 
   defp get_bitstamp_key do
-    Application.get_env(:bitstamp_elixir, :key) || System.get_env("BITSTAMP_KEY") || @bitstamp_key
+    vault_get_kv("bitstamp", "key") || config(:key) || System.get_env("BITSTAMP_KEY") || @bitstamp_key
   end
 
   defp get_bitstamp_secret do
-    Application.get_env(:bitstamp_elixir, :secret) || System.get_env("BITSTAMP_SECRET") || @bitstamp_secret
+    vault_get_kv("bitstamp", "secret") || config(:secret) || System.get_env("BITSTAMP_SECRET") || @bitstamp_secret
   end
 
-  defp get_recv_timeout do
-    Application.get_env(:bitstamp_elixir, :get_recv_timeout) || 5_000
+  defp vault_get_kv(path, key) do
+    case config(:vault_module) do
+      vault_mod when is_atom(vault_mod) -> vault_mod.get_kv(path, key)
+      _ -> nil
+    end
   end
 
-  defp post_recv_timeout do
-    Application.get_env(:bitstamp_elixir, :post_recv_timeout) || 5_000
+  defp config do
+    Application.get_env(:bitstamp_elixir, __MODULE__, [])
+  end
+
+  defp config(key, default \\ nil) do
+    Keyword.get(config(), key, default)
   end
 
 end
